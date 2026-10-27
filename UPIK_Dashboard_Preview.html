@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>UPIK Dashboard — Jabatan Pengajian Am, PSIS</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, "Segoe UI", system-ui, sans-serif; font-size: 13px; background: #f0f2f5; color: #1f2328; }
+
+  .sidebar { position: fixed; top: 0; left: 0; width: 215px; height: 100vh; background: #1a3a6e; display: flex; flex-direction: column; z-index: 100; }
+  .sidebar-logo { padding: 20px 18px 14px; border-bottom: 1px solid #2a4e8e; }
+  .sidebar-logo h2 { color: #c8a92d; font-size: 14px; font-weight: 700; line-height: 1.3; }
+  .sidebar-logo p { color: #8baad4; font-size: 11px; margin-top: 3px; }
+  .nav { flex: 1; padding: 10px 0; }
+  .nav-item { display: flex; align-items: center; gap: 10px; padding: 10px 18px; color: #b0c4de; font-size: 12px; cursor: pointer; border-left: 3px solid transparent; }
+  .nav-item:hover { background: #223f78; color: #fff; }
+  .nav-item.active { background: #223f78; color: #c8a92d; border-left-color: #c8a92d; font-weight: 600; }
+
+  .main { margin-left: 215px; min-height: 100vh; }
+  .topbar { background: #fff; padding: 14px 28px; border-bottom: 1px solid #e5e7eb; display: flex; align-items: center; justify-content: space-between; }
+  .topbar h1 { font-size: 16px; font-weight: 700; color: #1a3a6e; }
+  .updated { font-size: 11px; color: #57606a; background: #f7f8fa; border: 1px solid #e5e7eb; border-radius: 4px; padding: 4px 10px; }
+  .content { padding: 24px 28px; }
+
+  .page { display: none; }
+  .page.active { display: block; }
+  .section-sub { font-size: 12px; color: #57606a; margin-bottom: 20px; }
+
+  .kpi-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 24px; }
+  .kpi-card { background: #fff; border-radius: 8px; padding: 18px 20px; border: 1px solid #e5e7eb; border-top: 4px solid #1a3a6e; }
+  .kpi-card.gold { border-top-color: #c8a92d; }
+  .kpi-card.teal { border-top-color: #0d7377; }
+  .kpi-card .label { font-size: 11px; color: #57606a; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+  .kpi-card .value { font-size: 30px; font-weight: 700; color: #1a3a6e; }
+  .kpi-card.gold .value { color: #c8a92d; }
+  .kpi-card.teal .value { color: #0d7377; }
+  .kpi-card .sub { font-size: 11px; color: #57606a; margin-top: 4px; }
+
+  .charts-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
+  .chart-card { background: #fff; border-radius: 8px; padding: 18px 20px; border: 1px solid #e5e7eb; }
+  .chart-card.full { grid-column: 1 / -1; }
+  .chart-card h3 { font-size: 13px; font-weight: 600; color: #1a3a6e; margin-bottom: 14px; }
+
+  .bar-chart { display: flex; flex-direction: column; gap: 7px; }
+  .bar-row { display: flex; align-items: center; gap: 10px; }
+  .bar-label { width: 140px; font-size: 11px; color: #57606a; text-align: right; flex-shrink: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .bar-wrap { flex: 1; background: #f0f2f5; border-radius: 4px; height: 20px; }
+  .bar-fill { height: 100%; background: #1a3a6e; border-radius: 4px; display: flex; align-items: center; padding-left: 6px; color: #fff; font-size: 10px; font-weight: 600; min-width: 22px; }
+  .bar-fill.gold { background: #c8a92d; }
+  .bar-fill.teal { background: #0d7377; }
+  .bar-fill.purple { background: #7c5cd8; }
+  .bar-fill.red { background: #c0392b; }
+
+  .table-wrap { background: #fff; border-radius: 8px; border: 1px solid #e5e7eb; overflow: hidden; margin-bottom: 24px; }
+  .table-header { padding: 14px 18px; border-bottom: 1px solid #e5e7eb; display: flex; align-items: center; justify-content: space-between; }
+  .table-header h3 { font-size: 13px; font-weight: 600; color: #1a3a6e; }
+  .table-scroll { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 11.5px; }
+  th { background: #f7f8fa; padding: 9px 12px; text-align: left; font-weight: 600; color: #57606a; font-size: 11px; text-transform: uppercase; letter-spacing: 0.3px; border-bottom: 1px solid #e5e7eb; white-space: nowrap; }
+  td { padding: 9px 12px; border-bottom: 1px solid #f0f2f5; vertical-align: top; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: #f7f8fa; }
+
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 10px; font-weight: 600; white-space: nowrap; }
+  .b-emas { background: #fef9c3; color: #854d0e; }
+  .b-perak { background: #f1f5f9; color: #475569; }
+  .b-gangsa { background: #fef3c7; color: #92400e; }
+  .b-pertama { background: #dcfce7; color: #166534; }
+  .b-kedua { background: #dbeafe; color: #1e40af; }
+  .b-ketiga { background: #ede9fe; color: #5b21b6; }
+  .b-antarabangsa { background: #dbeafe; color: #1e40af; }
+  .b-kebangsaan { background: #dcfce7; color: #166534; }
+  .b-politeknik { background: #ede9fe; color: #5b21b6; }
+  .b-jabatan { background: #f0f2f5; color: #57606a; }
+  .b-penulis { background: #dbeafe; color: #1e40af; }
+  .b-award { background: #fef9c3; color: #854d0e; }
+  .b-proj-pensyarah { background: #dbeafe; color: #1e40af; }
+  .b-proj-pelajar { background: #dcfce7; color: #166534; }
+</style>
+</head>
+<body>
+
+<div class="sidebar">
+  <div class="sidebar-logo">
+    <h2>UPIK Dashboard</h2>
+    <p>Jabatan Pengajian Am, PSIS</p>
+  </div>
+  <div class="nav">
+    <div class="nav-item active" onclick="showPage('overview',this)">📊 &nbsp;Overview</div>
+    <div class="nav-item" onclick="showPage('penyelidikan',this)">🔬 &nbsp;Penyelidikan</div>
+    <div class="nav-item" onclick="showPage('inovasi',this)">💡 &nbsp;Inovasi</div>
+  </div>
+</div>
+
+<div class="main">
+  <div class="topbar">
+    <h1 id="page-title">Overview</h1>
+    <span class="updated">Data: PSIS — Jabatan Pengajian Am &nbsp;|&nbsp; 2024–2026</span>
+  </div>
+
+  <div class="content">
+
+    <!-- ===== OVERVIEW ===== -->
+    <div class="page active" id="page-overview">
+      <p class="section-sub">Ringkasan keseluruhan aktiviti Unit Penyelidikan, Inovasi &amp; Komersialan (UPIK) — Jabatan Pengajian Am, Politeknik Sultan Idris Shah</p>
+
+      <div class="kpi-grid">
+        <div class="kpi-card">
+          <div class="label">Jumlah Penyelidikan</div>
+          <div class="value">17</div>
+          <div class="sub">Kajian &amp; penerbitan</div>
+        </div>
+        <div class="kpi-card gold">
+          <div class="label">Jumlah Inovasi</div>
+          <div class="value">4</div>
+          <div class="sub">Projek inovasi berdaftar</div>
+        </div>
+        <div class="kpi-card teal">
+          <div class="label">Pencapaian / Anugerah</div>
+          <div class="value">6</div>
+          <div class="sub">Gold, Silver, Best Paper &amp; lain-lain</div>
+        </div>
+        <div class="kpi-card">
+          <div class="label">Peringkat Antarabangsa</div>
+          <div class="value">13</div>
+          <div class="sub">Penyelidikan &amp; inovasi</div>
+        </div>
+        <div class="kpi-card gold">
+          <div class="label">Projek Pensyarah</div>
+          <div class="value">15</div>
+          <div class="sub">Daripada 17 rekod penyelidikan</div>
+        </div>
+        <div class="kpi-card teal">
+          <div class="label">Bidang Utama</div>
+          <div class="value">Education</div>
+          <div class="sub">Dominan dalam kedua-dua sheet</div>
+        </div>
+      </div>
+
+      <div class="charts-row">
+        <div class="chart-card">
+          <h3>Penyelidikan — Peringkat</h3>
+          <div class="bar-chart">
+            <div class="bar-row"><span class="bar-label">Antarabangsa</span><div class="bar-wrap"><div class="bar-fill" style="width:82%">14</div></div></div>
+            <div class="bar-row"><span class="bar-label">Politeknik</span><div class="bar-wrap"><div class="bar-fill teal" style="width:18%">3</div></div></div>
+          </div>
+        </div>
+        <div class="chart-card">
+          <h3>Inovasi — Pencapaian</h3>
+          <div class="bar-chart">
+            <div class="bar-row"><span class="bar-label">Emas</span><div class="bar-wrap"><div class="bar-fill gold" style="width:25%">1</div></div></div>
+            <div class="bar-row"><span class="bar-label">Perak</span><div class="bar-wrap"><div class="bar-fill" style="width:25%">1</div></div></div>
+            <div class="bar-row"><span class="bar-label">Tempat Pertama</span><div class="bar-wrap"><div class="bar-fill teal" style="width:25%">1</div></div></div>
+            <div class="bar-row"><span class="bar-label">Perak (belum)</span><div class="bar-wrap"><div class="bar-fill" style="width:25%">1</div></div></div>
+          </div>
+        </div>
+        <div class="chart-card">
+          <h3>Penyelidikan — Kategori</h3>
+          <div class="bar-chart">
+            <div class="bar-row"><span class="bar-label">Projek Pensyarah</span><div class="bar-wrap"><div class="bar-fill" style="width:88%">15</div></div></div>
+            <div class="bar-row"><span class="bar-label">Projek Pelajar</span><div class="bar-wrap"><div class="bar-fill gold" style="width:12%">2</div></div></div>
+          </div>
+        </div>
+        <div class="chart-card">
+          <h3>Penyelidikan — Bidang</h3>
+          <div class="bar-chart">
+            <div class="bar-row"><span class="bar-label">Education</span><div class="bar-wrap"><div class="bar-fill" style="width:88%">15</div></div></div>
+            <div class="bar-row"><span class="bar-label">Social Sciences</span><div class="bar-wrap"><div class="bar-fill gold" style="width:18%">2</div></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== PENYELIDIKAN ===== -->
+    <div class="page" id="page-penyelidikan">
+      <p class="section-sub">Rekod kajian, penerbitan dan pembentangan di persidangan/seminar oleh pensyarah Jabatan Pengajian Am, PSIS</p>
+
+      <div class="kpi-grid">
+        <div class="kpi-card">
+          <div class="label">Jumlah Rekod</div>
+          <div class="value">17</div>
+        </div>
+        <div class="kpi-card gold">
+          <div class="label">Peringkat Antarabangsa</div>
+          <div class="value">14</div>
+        </div>
+        <div class="kpi-card teal">
+          <div class="label">Peringkat Politeknik</div>
+          <div class="value">3</div>
+        </div>
+      </div>
+
+      <div class="charts-row">
+        <div class="chart-card">
+          <h3>Mengikut Peringkat</h3>
+          <div class="bar-chart">
+            <div class="bar-row"><span class="bar-label">Antarabangsa</span><div class="bar-wrap"><div class="bar-fill" style="width:82%">14</div></div></div>
+            <div class="bar-row"><span class="bar-label">Politeknik</span><div class="bar-wrap"><div class="bar-fill teal" style="width:18%">3</div></div></div>
+          </div>
+        </div>
+        <div class="chart-card">
+          <h3>Mengikut Kategori</h3>
+          <div class="bar-chart">
+            <div class="bar-row"><span class="bar-label">Projek Pensyarah</span><div class="bar-wrap"><div class="bar-fill" style="width:88%">15</div></div></div>
+            <div class="bar-row"><span class="bar-label">Projek Pelajar</span><div class="bar-wrap"><div class="bar-fill gold" style="width:12%">2</div></div></div>
+          </div>
+        </div>
+        <div class="chart-card full">
+          <h3>Mengikut Pensyarah (Penyelidik Utama)</h3>
+          <div class="bar-chart">
+            <div class="bar-row"><span class="bar-label">Nur Hidayati Binti Sanusi</span><div class="bar-wrap"><div class="bar-fill" style="width:65%">7</div></div></div>
+            <div class="bar-row"><span class="bar-label">Mohd Farid Bin Dawam</span><div class="bar-wrap"><div class="bar-fill gold" style="width:28%">3</div></div></div>
+            <div class="bar-row"><span class="bar-label">Radika Subramaniam</span><div class="bar-wrap"><div class="bar-fill teal" style="width:19%">2</div></div></div>
+            <div class="bar-row"><span class="bar-label">Noorarizawaty Binti Aris</span><div class="bar-wrap"><div class="bar-fill purple" style="width:9%">1</div></div></div>
+            <div class="bar-row"><span class="bar-label">Durgai Ravindaran</span><div class="bar-wrap"><div class="bar-fill" style="width:9%">1</div></div></div>
+            <div class="bar-row"><span class="bar-label">Maryam Bte Badrul Munir</span><div class="bar-wrap"><div class="bar-fill gold" style="width:9%">1</div></div></div>
+            <div class="bar-row"><span class="bar-label">Mohd Fadzu Bin Zulkeflee</span><div class="bar-wrap"><div class="bar-fill teal" style="width:19%">2</div></div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="table-wrap">
+        <div class="table-header">
+          <h3>Senarai Penyelidikan &amp; Penerbitan</h3>
+          <span style="font-size:11px;color:#57606a">17 rekod</span>
+        </div>
+        <div class="table-scroll">
+        <table>
+          <tr>
+            <th>Bil</th>
+            <th style="min-width:260px">Tajuk Kajian / Penyelidikan</th>
+            <th style="min-width:180px">Nama Penyelidik</th>
+            <th style="min-width:220px">Nama Persidangan / Seminar</th>
+            <th>Tarikh</th>
+            <th>Pencapaian</th>
+            <th>Peringkat</th>
+            <th>Kategori</th>
+            <th>Bidang</th>
+          </tr>
+          <tr><td>CTH</td><td>A Study on Learner's Satisfaction Towards Informal Academic Learning Space in Higher Education Institutions</td><td>Ramu Velusamy; Naeemah Yusof; Mazarina Md Zain</td><td>International Multidisciplinary Conference 2021</td><td>15-Jun-21</td><td><span class="badge b-award">Best Paper Award</span></td><td><span class="badge b-antarabangsa">Antarabangsa</span></td><td><span class="badge b-proj-pensyarah">Projek Pensyarah</span></td><td>Education</td></tr>
+          <tr><td>1</td><td>Analysis of Errors in Constructing Arabic Sentences Among MPU22362 Students, Sultan Idris Shah Polytechnic</td><td>Nur Hidayati Binti Sanusi</td><td>SEMARAK ILMU PUBLISHING — Semarak International Journal of Current Research in Language and Human Studies, Vol. 6, No. 1 (March) 2026</td><td>16 Jan 2026</td><td><span class="badge b-award">The Best Article, Editor's Choice</span></td><td><span class="badge b-antarabangsa">Antarabangsa</span></td><td><span class="badge b-proj-pensyarah">Projek Pensyarah</span></td><td>Education</td></tr>
+          <tr><td>2</td><td>EduGame Arabic Letter Dice: An Innovation for Enhancing Arabic Word-Building Skills</td><td>Nur Hidayati Sanusi; Noorwati Mohd Dawam</td><td>International Creative Innovation Idea Competition 2026</td><td>24 Jan 2026</td><td><span class="badge b-perak">Silver</span></td><td><span class="badge b-antarabangsa">Antarabangsa</span></td><td><span class="badge b-proj-pensyarah">Projek Pensyarah</span></td><td>Education</td></tr>
+          <tr><td>3</td><td>Pengaruh Xenoglossofobia Terhadap Keberkesanan Pembelajaran Bahasa Inggeris dalam Kalangan Pelajar Politeknik Sultan Idris Shah</td><td>Nur Hidayati Sanusi; Mohd Khair bin Nordin@Baharuddin; Mohammad bin Muda</td><td>20th International Conference On Business Studies &amp; Education- JPPTM Jilid 4, Isu 1</td><td>30-31 Mac 2026</td><td><span class="badge b-penulis">Penulis &amp; Pembentang</span></td><td><span class="badge b-antarabangsa">Antarabangsa</span></td><td><span class="badge b-proj-pensyarah">Projek Pensyarah</span></td><td>Education</td></tr>
+          <tr><td>4</td><td>Keberkesanan Pelaksanaan Peningkatan Kualiti Berterusan Terhadap Pencapaian Hasil Pembelajaran DUF10212 Bahasa Arab 1</td><td>Nur Hidayati Sanusi; Mohd Rusdan Hasan</td><td>20th International Conference On Business Studies &amp; Education- JPPTM Jilid 4, Isu 1</td><td>30-31 Mac 2026</td><td><span class="badge b-penulis">Penulis &amp; Pembentang</span></td><td><span class="badge b-antarabangsa">Antarabangsa</span></td><td><span class="badge b-proj-pensyarah">Projek Pensyarah</span></td><td>Education</td></tr>
+          <tr><td>5</td><td>A Correlational Study of Learning Style Preferences in the Subject of Penghayatan Etika dan Peradaban Among Students of Politeknik Sultan Idris Shah</td><td>Nur Hidayati Sanusi; Noorwati Mohd Dawam; Rahimah Halim; Dr. Maryam Bte Badrul Munir</td><td>International TVET Academic and Research Symposium 5.0 (ITARS 5.0) - UTVET Vol.7, No.1 (2026)</td><td>8 April 2026</td><td><span class="badge b-penulis">Penulis &amp; Pembentang</span></td><td><span class="badge b-antarabangsa">Antarabangsa</span></td><td><span class="badge b-proj-pensyarah">Projek Pensyarah</span></td><td>Education</td></tr>
+          <tr><td>6</td><td>Persepsi Pelajar Terhadap Kursus Integriti Dan Anti Rasuah (Kiar) Dalam Membentuk Kesedaran Integriti Di Kalangan Pelajar: Satu Kajian Di Politeknik Sultan Idris Shah</td><td>Mohd Farid Bin Dawam</td><td>International Education Research &amp; Innovation Carnival (INERIC 2026) 12-14 May 2026</td><td>12-14 Mei 2026</td><td><span class="badge b-award">Penulis &amp; Pembentang (Gold Award)</span></td><td><span class="badge b-antarabangsa">Antarabangsa</span></td><td><span class="badge b-proj-pensyarah">Projek Pensyarah</span></td><td>Education</td></tr>
+          <tr><td>7</td><td>Penggunaan Teknologi Maklumat Di Kalangan Pelajar Politeknik Sultan Idris Shah Dalam Kursus Nilai Masyarakat Malaysia</td><td>Mohd Farid Bin Dawam</td><td>International Education Research &amp; Innovation Carnival (INERIC 2026) 12-14 May 2026</td><td>12-14 Mei 2026</td><td><span class="badge b-award">Penulis &amp; Pembentang (Gold Award)</span></td><td><span class="badge b-antarabangsa">Antarabangsa</span></td><td><span class="badge b-proj-pensyarah">Projek Pensyarah</span></td><td>Education</td></tr>
+          <tr><td>8</td><td>AI-Driven Innovation in Resume Tool Development: A Needs-Based Approach for TVET Students</td><td>Noorarizawaty Binti Aris; Harlini Binti Khairuddin; Siti Zaharah Binti Abdul Aziz</td><td>International Conference on Research, Innovation, Sustainability, &amp; Education (iRiseon 2026)</td><td>18-19 April 2026</td><td><span class="badge b-penulis">Penulis &amp; Pembentang</span></td><td><span class="badge b-antarabangsa">Antarabangsa</span></td><td><span class="badge b-proj-pensyarah">Projek Pensyarah</span></td><td>Education</td></tr>
+          <tr><td>9</td><td>Exploring the Reading Attitudes of Diploma Students in Politeknik Sultan Idris Shah Towards English Materials</td><td>Durgai Ravindaran</td><td>Enviropoly 2026 Enviromental &amp; Eco Green Simposium</td><td>11-12 Ogos 2026</td><td><span class="badge b-penulis">Penulis &amp; Pembentang</span></td><td><span class="badge b-politeknik">Politeknik</span></td><td><span class="badge b-proj-pensyarah">Projek Pensyarah</span></td><td>Education</td></tr>
+          <tr><td>10</td><td>Lecturers' Perceptions of ChatGPT Use in Malaysian Polytechnic ESL Classrooms: An Exploratory Descriptive Study</td><td>Radika Subramaniam</td><td>The 4th International Conference on Modern Languages and Applied Linguistics — International Journal of Humanities, Philosophy and Language (IJHPL)</td><td>29 April 2026</td><td><span class="badge b-penulis">Penulis &amp; Pembentang</span></td><td><span class="badge b-antarabangsa">Antarabangsa</span></td><td><span class="badge b-proj-pensyarah">Projek Pensyarah</span></td><td>Education</td></tr>
+          <tr><td>11</td><td>Shared and Unshared Verb Phrase-Based Bundles Between L2 and L1 Novice, and Expert Academic Writing</td><td>Radika Subramaniam</td><td>The IUP Journal of English Studies</td><td>April-Jun 2026</td><td><span class="badge b-penulis">Penulis</span></td><td><span class="badge b-antarabangsa">Antarabangsa</span></td><td><span class="badge b-proj-pensyarah">Projek Pensyarah</span></td><td>Education</td></tr>
+          <tr><td>12</td><td>High-Performance Work Systems in the Indonesian Context: A Strategic Human Resource Management Literature Review</td><td>Maryam Bte Badrul Munir; Umi Hamidaton Soffian Lee; Nur Hidayati Sanusi; Tahani Badrul Munir</td><td>Creative Economics and Tourism and Halal Ecosystem (CETHE) Vol. 4, No. 2 (2026)</td><td>18 Julai 2026</td><td><span class="badge b-penulis">Penulis</span></td><td><span class="badge b-antarabangsa">Antarabangsa</span></td><td><span class="badge b-proj-pensyarah">Projek Pensyarah</span></td><td>Education</td></tr>
+          <tr><td>13</td><td>Tahap Penguasaan Bahasa Inggeris dan Hubungannya Terhadap Pemahaman Konsep Alam Sekitar dalam Kalangan Pelajar DAS, Politeknik Sultan Idris Shah</td><td>Mohd Khair bin Nordin@Baharuddin; Nur Hidayati Sanusi</td><td>Enviropoly 2026 Enviromental &amp; Eco Green Simposium</td><td>11-12 Ogos 2026</td><td><span class="badge b-penulis">Penulis &amp; Pembentang</span></td><td><span class="badge b-politeknik">Politeknik</span></td><td><span class="badge b-proj-pensyarah">Projek Pensyarah</span></td><td>Education</td></tr>
+          <tr><td>14</td><td>Hubungan Antara Tahap Keyakinan Diri Pelajar dengan Kebimbangan dalam Menggunakan Bahasa Arab di Politeknik Sultan Idris Shah</td><td>Nur Hidayati Sanusi; Mohd Rusdan Hasan; Mohd Farid Dawam</td><td>ICWET2026, PKK — Politeknik Kota Kinabalu &amp; Politeknik Medan</td><td>12-13 Ogos 2026</td><td><span class="badge b-penulis">Penulis &amp; Pembentang</span></td><td><span class="badge b-antarabangsa">Antarabangsa</span></td><td><span class="badge b-proj-pensyarah">Projek Pensyarah</span></td><td>Education</td></tr>
+          <tr><td>15</td><td>The Relationship Between Corruption Knowledge and Perceptions of "Duit Kopi" Among Polytechnic Students</td><td>Nur Hidayati Sanusi; Mohd Husni Abd Halid; Asma' Ibrahim</td><td>ITEC2026 — Politeknik Kota Bharu &amp; Politeknik Medan</td><td>1-2 Sept 2026</td><td><span class="badge b-penulis">Penulis &amp; Pembentang</span></td><td><span class="badge b-antarabangsa">Antarabangsa</span></td><td><span class="badge b-proj-pensyarah">Projek Pensyarah</span></td><td>Education</td></tr>
+          <tr><td>16</td><td>Factors Affecting Concentration and Learning Focus Among Junior-Dip PSIS</td><td>Mohd Fadzu Bin Zulkeflee; Mohd Rusdan Bin Hasan</td><td>International TVET Academic and Research Symposium 2026 (ITARS 5.0)</td><td>2026</td><td><span class="badge b-penulis">Penulis</span></td><td><span class="badge b-antarabangsa">Antarabangsa</span></td><td><span class="badge b-proj-pensyarah">Projek Pensyarah</span></td><td>Social Sciences</td></tr>
+          <tr><td>17</td><td>Study on Anxiety Levels and Influencing Factors for Final Semester Students of the Diploma in Electronic Engineering (Computer) at PSIS</td><td>Mohd Fadzu Bin Zulkeflee; Noraisah Binti Ismail</td><td>Innovation, Technology, Engineering and Commercialization 2026 (PITEC) 2026</td><td>2026</td><td><span class="badge b-penulis">Penulis</span></td><td><span class="badge b-antarabangsa">Antarabangsa</span></td><td><span class="badge b-proj-pensyarah">Projek Pensyarah</span></td><td>Social Sciences</td></tr>
+        </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== INOVASI ===== -->
+    <div class="page" id="page-inovasi">
+      <p class="section-sub">Rekod projek inovasi dan pencapaian pertandingan oleh pensyarah dan pelajar Jabatan Pengajian Am, PSIS</p>
+
+      <div class="kpi-grid">
+        <div class="kpi-card">
+          <div class="label">Jumlah Projek Inovasi</div>
+          <div class="value">4</div>
+        </div>
+        <div class="kpi-card gold">
+          <div class="label">Projek Menang Anugerah</div>
+          <div class="value">3</div>
+          <div class="sub">Emas, Perak &amp; Tempat Pertama</div>
+        </div>
+        <div class="kpi-card teal">
+          <div class="label">Peringkat Antarabangsa</div>
+          <div class="value">2</div>
+          <div class="sub">ICIIC 2026 &amp; lain-lain</div>
+        </div>
+      </div>
+
+      <div class="charts-row">
+        <div class="chart-card">
+          <h3>Pencapaian / Anugerah</h3>
+          <div class="bar-chart">
+            <div class="bar-row"><span class="bar-label">Emas</span><div class="bar-wrap"><div class="bar-fill gold" style="width:25%">1</div></div></div>
+            <div class="bar-row"><span class="bar-label">Perak</span><div class="bar-wrap"><div class="bar-fill" style="width:25%">1</div></div></div>
+            <div class="bar-row"><span class="bar-label">Tempat Pertama</span><div class="bar-wrap"><div class="bar-fill teal" style="width:25%">1</div></div></div>
+            <div class="bar-row"><span class="bar-label">Perak (belum)</span><div class="bar-wrap"><div class="bar-fill" style="width:25%">1</div></div></div>
+          </div>
+        </div>
+        <div class="chart-card">
+          <h3>Peringkat Pertandingan</h3>
+          <div class="bar-chart">
+            <div class="bar-row"><span class="bar-label">Antarabangsa</span><div class="bar-wrap"><div class="bar-fill" style="width:50%">2</div></div></div>
+            <div class="bar-row"><span class="bar-label">Jabatan</span><div class="bar-wrap"><div class="bar-fill gold" style="width:25%">1</div></div></div>
+            <div class="bar-row"><span class="bar-label">Kebangsaan</span><div class="bar-wrap"><div class="bar-fill teal" style="width:25%">1</div></div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="table-wrap">
+        <div class="table-header">
+          <h3>Senarai Projek Inovasi</h3>
+          <span style="font-size:11px;color:#57606a">4 rekod</span>
+        </div>
+        <div class="table-scroll">
+        <table>
+          <tr>
+            <th>Bil</th>
+            <th style="min-width:200px">Nama Projek / Inovasi</th>
+            <th style="min-width:180px">Pensyarah PSIS</th>
+            <th style="min-width:160px">Nama Pertandingan</th>
+            <th>Anjuran</th>
+            <th>Tempat</th>
+            <th>Tarikh</th>
+            <th>Pencapaian</th>
+            <th>Peringkat</th>
+            <th>Kategori</th>
+            <th>Bidang</th>
+          </tr>
+          <tr>
+            <td>CTH</td>
+            <td>Poultry Incubator Inspection System</td>
+            <td>Muhamad Aiman Aidil Bin Idris</td>
+            <td>National Innovation and Invention Competition through Exhibition 2019 (iCompEx'19)</td>
+            <td>Politeknik Sultan Abdul Halim Mu'adzam Shah (POLIMAS)</td>
+            <td>Dewan Wawasan, Jitra, Kedah</td>
+            <td>19-21 Mac 2019</td>
+            <td><span class="badge b-gangsa">Gangsa</span></td>
+            <td><span class="badge b-kebangsaan">Kebangsaan</span></td>
+            <td><span class="badge b-proj-pelajar">Projek Pelajar</span></td>
+            <td>ICT</td>
+          </tr>
+          <tr>
+            <td>1</td>
+            <td>Arabic Dice</td>
+            <td>Nur Hidayati Binti Sanusi; Noorwati Binti Mohd Dawam</td>
+            <td>International Creative &amp; Innovative Idea Competition (ICIIC) 2026</td>
+            <td>MNNF Network</td>
+            <td>Atas Talian</td>
+            <td>24 Januari 2026</td>
+            <td><span class="badge b-perak">Perak</span></td>
+            <td><span class="badge b-antarabangsa">Antarabangsa</span></td>
+            <td><span class="badge b-proj-pensyarah">Projek Pensyarah</span></td>
+            <td>Education</td>
+          </tr>
+          <tr>
+            <td>2</td>
+            <td>Fun With Al-Alwan</td>
+            <td>Nur Hidayati Binti Sanusi</td>
+            <td>International Creative &amp; Innovative Idea Competition (ICIIC) 2026</td>
+            <td>MNNF Network</td>
+            <td>Atas Talian</td>
+            <td>24 Januari 2026</td>
+            <td><span class="badge b-emas">Emas</span></td>
+            <td><span class="badge b-antarabangsa">Antarabangsa</span></td>
+            <td><span class="badge b-proj-pensyarah">Projek Pensyarah</span></td>
+            <td>Education</td>
+          </tr>
+          <tr>
+            <td>3</td>
+            <td>From Manual to Intelligent: A Lean Transformation of Resume Assessment in TVET</td>
+            <td>Noorarizawaty Binti Aris; Harlini Binti Khairuddin; Siti Zaharah Binti Abdul Aziz</td>
+            <td>Pertandingan Lean Management PSIS 2026</td>
+            <td>Politeknik Sultan Idris Shah</td>
+            <td>Politeknik Sultan Idris Shah</td>
+            <td>8 April 2026</td>
+            <td><span class="badge b-pertama">Tempat Pertama</span></td>
+            <td><span class="badge b-jabatan">Jabatan</span></td>
+            <td><span class="badge b-proj-pensyarah">Projek Pensyarah</span></td>
+            <td>Education</td>
+          </tr>
+        </table>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+function showPage(id, el) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-' + id).classList.add('active');
+  el.classList.add('active');
+  const titles = { overview:'Overview — UPIK Dashboard', penyelidikan:'Penyelidikan & Penerbitan', inovasi:'Inovasi & Pertandingan' };
+  document.getElementById('page-title').textContent = titles[id];
+}
+</script>
+</body>
+</html>
